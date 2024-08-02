@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "al"
+version = "0.1.0"
+description = "my ai shit"
+authors = ["chrisaddy <chris.william.addy@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+typer = "^0.4.0"
+qdrant-client = "^0.9.0"
+ell = { path = "../ell" }
+
+[tool.poetry.scripts]
+al = "al.cli:app"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
