@@ -1,0 +1,2 @@
+# al
+personal ai shit
