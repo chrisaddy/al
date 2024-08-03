@@ -3,7 +3,7 @@ import subprocess
 import typer
 from typing import Optional
 import uuid
-from al.vectordb import VectorDB, Document
+from al.vectordb import VectorDB, Document, search_sync
 import asyncio
 from pydantic import BaseModel
 from pyfzf.pyfzf import FzfPrompt
@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 from qdrant_client import models
 from qdrant_client.http.models import Filter
+import ell.decorators.lm
 
 
 from al.vectordb import Collection
@@ -18,7 +19,7 @@ from al.vectordb import Collection
 app = typer.Typer(no_args_is_help=True)
 
 
-NotesCollection = Collection(name="notes")
+NotesCollection = Collection(name="notes-demo")
 
 
 @app.command()
@@ -48,7 +49,7 @@ def search(query: Optional[list[str]] = typer.Argument(None, help="query text"))
             for project in [q for q in query if q.startswith("+")]
         ]
     )
-    results = asyncio.run(search_sync(" ".join(query), filter))
+    results = asyncio.run(search_sync(NotesCollection, " ".join(query), filter))
 
     if not results:
         typer.echo("No results found.")
@@ -56,7 +57,6 @@ def search(query: Optional[list[str]] = typer.Argument(None, help="query text"))
 
     fzf = FzfPrompt()
 
-    # Create temporary files for each document
     temp_dir = tempfile.mkdtemp()
     temp_files = []
     for doc in results:
@@ -64,14 +64,12 @@ def search(query: Optional[list[str]] = typer.Argument(None, help="query text"))
         temp_file.write_text(doc.text)
         temp_files.append(str(temp_file))
 
-    # Create a list of formatted strings for fzf
     fzf_input = []
     for i, doc in enumerate(results):
         formatted_score = f"{doc.score:.3f}"
-        content = doc.text.replace("\n", "\\n")  # Escape newlines for display
+        content = doc.text.replace("\n", "\\n")
         fzf_input.append(f"{formatted_score}\t{content}\t{temp_files[i]}")
 
-    # Use fzf to select from the formatted strings
     fzf_options = (
         "--multi "
         "--with-nth=1,2 "
@@ -90,12 +88,6 @@ def search(query: Optional[list[str]] = typer.Argument(None, help="query text"))
         asyncio.run(modify_note(Document(text=selected_content, id=id)))
     else:
         asyncio.run(modify_note())
-
-
-async def search_sync(query: str, filter: Filter):
-    db = VectorDB()
-    await db.connect()
-    return await db.search(collection=NotesCollection, query=query, filter=filter)
 
 
 async def modify_note(document: Optional[Document] = None):

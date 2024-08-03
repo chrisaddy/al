@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from dataclasses import dataclass
 from typing import Optional
 from qdrant_client.http.models import PointIdsList
+from qdrant_client.http.models import Filter
 
 from al.config import Config
 import os
@@ -83,3 +84,11 @@ class VectorDB:
         return [
             Document(text=r.document.strip(), id=r.id, score=r.score) for r in results
         ]
+
+
+async def search_sync(
+    collection: Collection, query: str, filter: Optional[Filter] = None
+):
+    db = VectorDB()
+    await db.connect()
+    return await db.search(collection=collection, query=query, filter=filter)
