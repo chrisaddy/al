@@ -3,6 +3,11 @@ from al.vectordb import VectorDB, Document, search_sync
 import typer
 import ell
 import asyncio
+from ell.stores.sql import SQLiteStore
+from al.config import Config
+
+config = Config()
+
 
 NotesCollection = Collection(name="notes-demo")
 
@@ -34,6 +39,7 @@ def retrieval_augmented_chat(
 
 async def run():
     ell.config.verbose = True
+    ell.set_store(SQLiteStore(config.ell_store), autocommit=True)
 
     db = VectorDB()
     await db.connect()
