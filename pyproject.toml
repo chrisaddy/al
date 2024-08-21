@@ -1,20 +1,22 @@
 [tool.poetry]
 name = "al"
 version = "0.1.0"
-description = "my ai shit"
+description = ""
 authors = ["chrisaddy <chris.william.addy@gmail.com>"]
-license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
-ell = { path = "../ell" }
-pydantic = "^1.8.2"
-qdrant-client = {extras = ["fastembed"], version = "^1.10.1"}
+python = ">=3.9,<=3.13"
+typer = "^0.12.4"
+pydantic = "^2.8.2"
+qdrant-client = { extras = ["fastembed"], version = "^1.11.0" }
 pyfzf-iter = "^0.0.1"
+
 
 [tool.poetry.scripts]
 al = "al.cli:app"
 
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

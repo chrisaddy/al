@@ -1,15 +1,15 @@
 import os
 import json
-from pydantic import BaseSettings
+from pydantic import BaseModel
 
 
-class Config(BaseSettings):
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
-    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY")
-    QDRANT_API_KEY: str = os.getenv("QDRANT_API_KEY")
-    QDRANT_URL: str = os.getenv("QDRANT_URL")
-    AL_TURSO_URL: str = os.getenv("AL_TURSO_URL")
-    AL_TURSO_TOKEN: str = os.getenv("AL_TURSO_TOKEN")
+class Config(BaseModel):
+    OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
+    ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY")
+    QDRANT_API_KEY: str | None = os.getenv("QDRANT_API_KEY")
+    QDRANT_URL: str | None = os.getenv("QDRANT_URL")
+    AL_TURSO_URL: str | None = os.getenv("AL_TURSO_URL")
+    AL_TURSO_TOKEN: str | None = os.getenv("AL_TURSO_TOKEN")
 
     @classmethod
     def load(cls):
@@ -24,7 +24,7 @@ class Config(BaseSettings):
     def save(self):
         config_path = os.path.expanduser("~/.al/config.json")
         with open(config_path, "w") as f:
-            json.dump(self.dict(), f, indent=4)
+            json.dump(self.model_dump(), f, indent=4)
 
     @property
     def ell_store(self):
