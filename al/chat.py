@@ -1,11 +1,8 @@
 from al.vectordb import NoteStore, Document
 import typer
 
-# import ell
-import asyncio
-
-# from ell.stores.sql import SQLiteStore
 from al.config import Config
+
 
 config = Config()
 
@@ -13,19 +10,14 @@ config = Config()
 app = typer.Typer(no_args_is_help=True)
 
 
-# @ell.lm(model="gpt-4o-mini")
+store = NoteStore("notes")
+
+
 def summarize_chat(memory: list[tuple[str, str]]):
     """You are summarizing a chat between a user and AI Assistant."""
     return f"<Chat History>{memory}</Chat History><Summary>"
 
 
-async def retriever(query: str):
-    db = VectorDB()
-    await db.connect()
-    # return await search_sync(NotesCollection, " ".join(query))
-
-
-# @ell.lm(model="gpt-4o-mini")
 def retrieval_augmented_chat(
     query: str, documents: list[Document], memory: list[tuple[str, str]]
 ):
@@ -36,13 +28,7 @@ def retrieval_augmented_chat(
     return f"<Chat History>{memory}</Chat History><Context>{documents}</Context><User Query>{query}</Query><Answer>"
 
 
-async def run():
-    # ell.config.verbose = True
-    # ell.set_store(SQLiteStore(config.ell_store), autocommit=True)
-
-    db = VectorDB()
-    await db.connect()
-
+def run():
     memory_buffer = []
     summarize_task = None
 
@@ -52,9 +38,9 @@ async def run():
             break
 
         if len(memory_buffer) <= 1:
-            retrieved = await retriever(user_input)
+            relevant_notes = store.search(user_input)
         else:
-            retrieved = []
+            relevant_notes = []
 
         response = retrieval_augmented_chat(user_input, retrieved, memory_buffer)
         print(response)
