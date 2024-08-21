@@ -2,6 +2,8 @@ from al.vectordb import NoteStore, Document
 import typer
 
 from al.config import Config
+from al import create_chat_history, experts
+from al.experts import ask_expert
 
 
 config = Config()
@@ -18,39 +20,30 @@ def summarize_chat(memory: list[tuple[str, str]]):
     return f"<Chat History>{memory}</Chat History><Summary>"
 
 
-def retrieval_augmented_chat(
-    query: str, documents: list[Document], memory: list[tuple[str, str]]
-):
-    """You're going to be given a user query and a set of documents as
-    context to the query. You will also be given a list of previous messages
-    in the chat. Answer the query using the context."""
-
-    return f"<Chat History>{memory}</Chat History><Context>{documents}</Context><User Query>{query}</Query><Answer>"
-
-
-def run():
-    memory_buffer = []
-    summarize_task = None
+def run(expert: str = None):
+    typer.echo(f"starting chat with {expert=}")
+    history = create_chat_history(expert)
+    expert = experts[expert]
 
     while True:
         user_input = input("> ")
-        if user_input.lower() in ["exit", "quit"]:
-            break
 
-        if len(memory_buffer) <= 1:
-            relevant_notes = store.search(user_input)
-        else:
-            relevant_notes = []
+        match user_input.lower():
+            case "exit" | "quit":
+                break
+            case "save":
+                with open("chat.history", "w") as f:
+                    f.write(str(history.messages))
+                    history.clear()
+            case "load":
+                typer.echo("TODO: ability to load chat history")
+                continue
+            case "history":
+                typer.echo(history.messages)
+                continue
 
-        response = retrieval_augmented_chat(user_input, retrieved, memory_buffer)
-        print(response)
+        history.add_user_message(user_input)
 
-        if len(memory_buffer) >= 15 and summarize_task is None:
-            summarize_task = asyncio.create_task(summarize_chat(memory_buffer))
-
-        if summarize_task and summarize_task.done():
-            summary = await summarize_task
-            memory_buffer = [summary]
-            summarize_task = None
-
-        memory_buffer.append((user_input, response))
+        response = ask_expert(user_input, expert, history=str(history.messages)).answer
+        history.add_ai_message(response)
+        typer.echo(response)

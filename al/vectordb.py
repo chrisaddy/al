@@ -3,15 +3,13 @@ import re
 from pathlib import Path
 
 from pydantic import BaseModel
-from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from langchain_community.vectorstores.redis import Redis
 from langchain.docstore.document import Document
 from langchain_community.vectorstores.redis import RedisText, RedisNum, RedisTag
 from langchain_community.vectorstores.redis import RedisFilter
 import warnings
 
-
-embeddings = FastEmbedEmbeddings()
+from al import embeddings
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
