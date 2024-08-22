@@ -2,9 +2,10 @@ import re
 from typing import Optional
 from pydantic import Field, BaseModel, model_validator, ValidationInfo
 from openai import OpenAI
-import instructor
+from instructor import from_openai, Mode
 
-client = instructor.from_openai(OpenAI())
+
+client = from_openai(OpenAI())  # , mode=Mode.TOOLS_STRICT)
 
 
 class Expert:
@@ -53,12 +54,12 @@ def ask_expert(
 ):
     messages = [{"role": "system", "content": expert.__doc__}]
     if context:
-        messages.append({"role": "user", "content": context})
+        messages.append({"role": "user", "content": f"notes: {context}"})
     if history:
-        messages.append({"role": "user", "content": history})
+        messages.append({"role": "user", "content": f"chat history: {history}"})
     messages.append({"role": "user", "content": question})
     return client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o",
         messages=messages,
         response_model=QuestionAnswer,
         validation_context={"text_chunk": context},
@@ -78,7 +79,7 @@ def ask_expert_with_sources(
         messages.append({"role": "user", "content": history})
     messages.append({"role": "user", "content": question})
     return client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o",
         messages=messages,
         response_model=QuestionAnswerWithSources,
         validation_context={"text_chunk": context},

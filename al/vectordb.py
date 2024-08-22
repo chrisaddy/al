@@ -1,18 +1,11 @@
-import os
 import re
 from pathlib import Path
 
 from pydantic import BaseModel
 from langchain_community.vectorstores.redis import Redis
 from langchain.docstore.document import Document
-from langchain_community.vectorstores.redis import RedisText, RedisNum, RedisTag
-from langchain_community.vectorstores.redis import RedisFilter
-import warnings
 
-from al import embeddings
-
-
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+from al import REDIS_URL, embeddings
 
 
 class IndexItem(BaseModel):
@@ -25,7 +18,7 @@ class NoteStore:
     def __init__(
         self,
         collection: str = "notes",
-        redis_url="redis://localhost:6379",
+        redis_url=REDIS_URL,
         notes_path=Path.home() / "notes",
     ):
         self.collection = collection
@@ -59,8 +52,7 @@ class NoteStore:
     def add_note(self, note) -> IndexItem:
         parsed_note = self.parse_content(note)
         document = Document(page_content=note, metadata=parsed_note)
-        with warnings.catch_warnings(action="ignore"):
-            result = self.client.add_documents([document])
+        result = self.client.add_documents([document])
 
         id_ = result[0]
 
@@ -70,7 +62,7 @@ class NoteStore:
             f.write(note)
         return IndexItem(index_id=id_, note_id=note_id, note_path=note_path)
 
-    def search(self, query, k=50):
+    def search(self, query, k=50, with_scores=True, limit_score=0.2):
         parsed_query = self.parse_content(query)
         # tags_filter = RedisTag("tags") == parsed_query.get("tags")
         # projects_filter = RedisTag("projects") == parsed_query.get("projects").replace(
@@ -80,10 +72,16 @@ class NoteStore:
         #     ",", "|"
         # )
         # filter = tags_filter | contexts_filter | projects_filter
-        return self.client.similarity_search_with_relevance_scores(
-            query,
-            k=k,  # filter=tags_filter
-        )
+        if with_scores:
+            return self.client.similarity_search_with_relevance_scores(
+                query,
+                score_threshold=limit_score,
+                k=k,  # filter=tags_filter
+            )
+        else:
+            return self.client.similarity_search_limit_score(
+                query, k=k, score_threshold=limit_score
+            )
 
     def delete_document(self, document) -> IndexItem:
         id_ = document.metadata.get("id")

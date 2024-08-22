@@ -17,7 +17,7 @@ from langchain_community.vectorstores.redis import RedisFilter
 app = typer.Typer(no_args_is_help=True)
 
 
-vectorstore = NoteStore("notes")
+vectorstore = NoteStore()
 
 
 @app.command()
@@ -91,7 +91,10 @@ def modify_note(content: str, id: Optional[str] = None):
         with open(temp_file, "w") as f:
             f.write(content)
 
-        subprocess.run([editor, temp_file])
+        if content:
+            subprocess.run([editor, temp_file])
+        else:
+            subprocess.run([editor, "+startinsert", temp_file])
 
         with open(temp_file, "r") as file:
             new_content = file.read()
